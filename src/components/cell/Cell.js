@@ -129,7 +129,7 @@ export function Row({ data, idx, type, handleClick }) {
   );
 }
 
-export function WhiteRow({ data, idx, type, handleClick }) {
+export function WhiteFixedRow({ data, idx, type, handleClick }) {
   const rowName = `${type} row`;
 
   return (

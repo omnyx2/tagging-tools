@@ -12,14 +12,29 @@ import { CSVLink } from "react-csv";
 import { HeadCell, Row, Rows, Table } from "./components/cell/Cell";
 import ReactTagsComponent from "./components/tags";
 import { current } from "immer";
+import * as d3 from "d3";
+import { dettach2DArrayCSV, autoProcessingCSV } from "./csvProcessor";
 
 const csvDataState = atom({
   key: "csvDataState",
-  default: []
+  default: [],
 });
 
 const csvDataReaderState = selector({
   key: "csvDataReader",
+  get: ({ get }) => {
+    const data = get(csvDataState);
+    return data;
+  },
+});
+
+const csvD3State = atom({
+  key: "csvD3State",
+  default: [],
+});
+
+const csvD3ReaderState = selector({
+  key: "csvD3Reader",
   get: ({ get }) => {
     const data = get(csvDataState);
     return data;
@@ -37,7 +52,7 @@ const currentItemState = atom({
     front: "",
     history: [],
   },
-})
+});
 
 //Recoil의 Setter의 역활은 데이터를 세팅하는 것에서 멈춘다. 단일 책임 에러는 에초에 상위 로직에서 처리해야한다.
 const currentItemReaderState = selector({
@@ -46,11 +61,9 @@ const currentItemReaderState = selector({
     const data = get(currentItemState);
     return data;
   },
-  set: ({set}, newValue) => set(currentItemState, newValue),
+  set: ({ set }, newValue) => set(currentItemState, newValue),
   // 데이터의 위치를 배열에 저장
-
 });
-
 
 // const tempCelsius = selector({
 //   key: 'tempCelsius',
@@ -71,17 +84,33 @@ const currentItemReaderState = selector({
 
 function CsvReader() {
   const [csvData, setCsvData] = useRecoilState(csvDataState);
- 
+  const dataProcessor = (rawData) => {
+    const data = dettach2DArrayCSV("url", rawData);
+    const data1 = autoProcessingCSV("url", rawData);
+    setCsvData(data?.newData);
+
+    console.log(data1);
+  };
+
   return (
     <CSVReader
       parserOptions={{ header: false }}
-      onFileLoaded={(data, fileInfo) => setCsvData(data)}
+      onFileLoaded={(data, fileInfo) => dataProcessor(data)}
     />
   );
 }
 
-
 function CsvDownloading() {
+  const csvData = useRecoilValue(csvDataReaderState);
+
+  return (
+    <div className="csv-data">
+      <CSVLink data={csvData}>Download me</CSVLink>
+    </div>
+  );
+}
+
+function CsvD3Reading() {
   const csvData = useRecoilValue(csvDataReaderState);
   return (
     <div className="csv-data">
@@ -110,20 +139,19 @@ function Pagenation() {
   return <div className="pagenagtion">1,2,3,,,,10</div>;
 }
 
-function ContentButtons(){
-
-  function NextUrl(NextUrl){
-    if ( NextUrl !== "" ){
+function ContentButtons() {
+  function NextUrl(NextUrl) {
+    if (NextUrl !== "") {
       // Set Current url to next url set
-      // Set  Url to 
+      // Set  Url to
       // Set Current url to back url set
       // Set BackUrl to CurrentUrl
     } else {
       // Pop up Not
     }
   }
-  function BeforeUrl(BeforeUrl){
-    if ( BeforeUrl !== "" ){
+  function BeforeUrl(BeforeUrl) {
+    if (BeforeUrl !== "") {
       // SetCurrent url to back url set
       // SetCurrent url to Next url set
       // Set BackUrl from urls
@@ -132,8 +160,8 @@ function ContentButtons(){
       // Pop up Not
     }
   }
-  function BackUrl(BeforeUrl){
-    if ( BeforeUrl !== "" ){
+  function BackUrl(BeforeUrl) {
+    if (BeforeUrl !== "") {
       // SetCurrent url to back url set
       // SetCurrent url to Next url set
       // Set BackUrl from urls
@@ -142,8 +170,8 @@ function ContentButtons(){
       // Pop up Not
     }
   }
-  function FrontUrl(BeforeUrl){
-    if ( BeforeUrl !== "" ){
+  function FrontUrl(BeforeUrl) {
+    if (BeforeUrl !== "") {
       // SetCurrent url to back url set
       // SetCurrent url to Next url set
       // Set BackUrl from urls
@@ -153,39 +181,26 @@ function ContentButtons(){
     }
   }
 
-
-  return(
+  return (
     <div className="grid grid-cols-4 grid-flow-rows gap-4 ">
-      <button className="p-3 bg-slate-300">
-        Before
-      </button>
-      <button className="p-3 bg-blue-200"> 
-        Next
-      </button>
-      <button className="p-3 bg-slate-300">
-        Back
-      </button>
-      <button className="p-3 bg-slate-300">
-        Front
-      </button>
+      <button className="p-3 bg-slate-300">Before</button>
+      <button className="p-3 bg-blue-200">Next</button>
+      <button className="p-3 bg-slate-300">Back</button>
+      <button className="p-3 bg-slate-300">Front</button>
     </div>
-  )
+  );
 }
 
-
-
-
 function Main() {
-  
   const urls = [
     "https://gall.dcinside.com/board/view/?id=webtoon&no=1411040",
     "https://gall.dcinside.com/board/view/?id=webtoon&no=1411041",
     "https://gall.dcinside.com/board/view/?id=webtoon&no=1411042",
     "https://gall.dcinside.com/board/view/?id=webtoon&no=1411043",
-  ]
-  const [currentItem, setCurrentItemState] = useRecoilState(currentItemState)
+  ];
+  const [currentItem, setCurrentItemState] = useRecoilState(currentItemState);
   // useEffect(() => {
-    
+
   //   setCurrentUrlState({...currentUrl, current: urls[0]})
   // })
   return (
@@ -210,7 +225,7 @@ function Main() {
             display="initial"
             position="relative"
           />
-          <ContentButtons/>
+          <ContentButtons />
 
           <div className="tagging">
             <ReactTagsComponent></ReactTagsComponent>
